@@ -172,14 +172,19 @@ BarWidget {
   }
 
   // CPU usage bar: a thin horizontal bar inside the widget, centered under the
-  // GPU text label and matching its width. Its fill tracks the current CPU
-  // utilization and flips to the bar's urgent color above the CPU threshold.
+  // GPU text label and matching its width. It sits directly beneath the label
+  // (not against the taskbar edge) so it reads as the widget's own meter. Its
+  // fill tracks the current CPU utilization and flips to the bar's urgent color
+  // above the CPU threshold.
   Item {
     id: cpuBar
     anchors {
-      bottom: parent.bottom
-      bottomMargin: 2
       horizontalCenter: parent.horizontalCenter
+      // Center under the vertically-centered label: offset the bar's center
+      // toward the bottom enough to clear the label text while keeping it
+      // clearly within the widget (not flush to the taskbar edge).
+      verticalCenter: parent.verticalCenter
+      verticalCenterOffset: 6
     }
     width: Math.max(24, button.labelWidth)
     height: 3
