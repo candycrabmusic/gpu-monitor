@@ -54,6 +54,8 @@ QtObject {
   property int pcieGen: 0           // current PCIe link generation
   property int pcieWidth: 0         // current PCIe link lanes
 
+  property real cpuUtil: 0          // CPU usage percent 0..100 (delta over one poll)
+
   property var processes: []       // [{pid, name, memory(MiB)}]
 
   readonly property int vramPct: Model.percent(root.vramUsed, root.vramTotal)
@@ -104,6 +106,10 @@ QtObject {
     if (!procProc.running) procProc.running = true
   }
 
+  function refreshCpu() {
+    if (!cpuProc.running) cpuProc.running = true
+  }
+
   property Timer pollTimer: Timer {
     interval: root.statInterval
     running: root.enabled
@@ -112,6 +118,7 @@ QtObject {
     onTriggered: {
       root.tick = root.tick + 1
       root.refresh()
+      root.refreshCpu()
       // Processes are heavier and change slowly; poll them on alternate ticks.
       if (root.tick % 2 === 0) root.refreshProcesses()
     }
@@ -133,6 +140,62 @@ QtObject {
       waitForEnd: true
       onStreamFinished: root.parseProcesses(procOutput.text)
     }
+  }
+
+  // CPU utilization is read from /proc/stat (no privileges, no extra tools).
+  // Utilization is the delta in non-idle CPU time between two consecutive
+  // reads, so the previous sample's raw counters are stashed below.
+  property var cpuPrev: null   // [{total, idle}] raw jiffies from last read
+  property int cpuCores: 0     // thread count (from `cpuN` lines), for the sum/max
+
+  property Process cpuProc: Process {
+    command: ["cat", "/proc/stat"]
+    stdout: StdioCollector {
+      id: cpuOutput
+      waitForEnd: true
+      onStreamFinished: root.parseCpu(cpuOutput.text)
+    }
+  }
+
+  function parseCpu(text) {
+    var lines = String(text || "").split("\n")
+    var agg = null
+    var cores = 0
+    for (var i = 0; i < lines.length; i++) {
+      var line = String(lines[i]).trim()
+      if (line.indexOf("cpu") !== 0) break
+      var tokens = line.split(/\s+/)
+      if (tokens.length < 5) continue
+      if (tokens[0] === "cpu") {
+        agg = tokens
+      } else if (tokens[0].indexOf("cpu") === 0) {
+        cores = cores + 1
+      }
+    }
+    if (!agg) { root.cpuUtil = 0; return }
+
+    // The aggregate `cpu` line reports the *system-wide* jiffies summed over
+    // all cores, so utilization over it is already the whole-machine percent.
+    var curTotal = 0
+    var curIdle = 0
+    for (var j = 1; j < agg.length; j++) {
+      var v = Model.posInt(agg[j], 0)
+      if (j === 4) curIdle = v + (j + 1 < agg.length ? Model.posInt(agg[j + 1], 0) : 0)
+      curTotal += v
+    }
+
+    root.cpuCores = cores
+
+    if (root.cpuPrev) {
+      var dTotal = curTotal - root.cpuPrev.total
+      var dIdle = curIdle - root.cpuPrev.idle
+      if (dTotal > 0) {
+        root.cpuUtil = Math.max(0, Math.min(100, Math.round(((dTotal - dIdle) / dTotal) * 100)))
+      }
+    }
+
+    root.cpuPrev = { total: curTotal, idle: curIdle }
+    if (cores > 0) root.firstSample = true
   }
 
   function boolField(value) {

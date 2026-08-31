@@ -50,7 +50,7 @@ BarWidget {
   }
 
   readonly property bool warnNow: stats.available
-    && (stats.tempGpu >= tempThreshold || stats.gpuUtil >= utilThreshold)
+    && (stats.tempGpu >= tempThreshold || stats.gpuUtil >= utilThreshold || stats.cpuUtil >= utilThreshold)
 
   function refresh() {
     svc.refresh()
@@ -60,7 +60,7 @@ BarWidget {
 
   readonly property string hoverText: {
     if (!stats.available) return "GPU —"
-    return "GPU " + stats.tempGpu + " °C · " + stats.gpuUtil + " %"
+    return "GPU " + stats.tempGpu + " °C · " + stats.gpuUtil + " % · CPU " + stats.cpuUtil + " %"
   }
 
   // The bar's tooltip shows a snapshot copied inside showTooltip(); mutating
@@ -168,6 +168,36 @@ BarWidget {
       if (b === Qt.RightButton) root.cycleMode()
       else if (b === Qt.MiddleButton) root.refresh()
       else root.togglePanel()
+    }
+  }
+
+  // Small CPU usage bar: a thin strip under the label whose fill tracks the
+  // current CPU utilization. Hidden until the first CPU sample lands.
+  Item {
+    id: cpuBar
+    anchors {
+      left: parent.left
+      right: parent.right
+      bottom: parent.bottom
+    }
+    height: 2
+    visible: stats.firstSample
+
+    Rectangle {
+      anchors.fill: parent
+      color: Qt.rgba(root.normalColor.r, root.normalColor.g, root.normalColor.b, 0.22)
+      radius: height / 2
+    }
+
+    Rectangle {
+      width: parent.width * (stats.cpuUtil / 100)
+      height: parent.height
+      radius: height / 2
+      color: stats.cpuUtil >= root.utilThreshold ? root.warnColor : root.normalColor
+
+      Behavior on width {
+        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+      }
     }
   }
 }

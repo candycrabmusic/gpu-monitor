@@ -14,9 +14,12 @@ plugin doesn't attempt it.
 - **Bar label** — `37° 12%` by default (temperature + utilization). Right-click
   cycles between `Both` / `Temp` / `Usage`; the choice persists to shell.json.
   The label flips to the bar's urgent color above the configured thresholds.
+- **CPU usage bar** — a thin strip under the label whose fill tracks the current
+  whole-machine CPU utilization (from `/proc/stat`, no extra tools). It shares
+  the GPU utilization warning threshold color.
 - **Details panel** (left-click, or `omarchy-shell shell show vichu.gpu-monitor`):
   - Utilization, temperature, fan speed, VRAM, power draw/limit, graphics and
-    memory clocks with their maxes.
+    memory clocks with their maxes, plus a CPU tile.
   - A VRAM-used bar with a warning threshold.
   - Throttling reasons (HW/sw thermal slowdown, power brake, hw slowdown,
     sync boost, GPU idle).
@@ -53,13 +56,16 @@ right-click the widget for `displayMode`):
 
 ## Data source
 
-Everything comes from `nvidia-smi` (part of `nvidia-utils`, already on PATH):
+Everything comes from `nvidia-smi` (part of `nvidia-utils`, already on PATH)
+plus `/proc/stat` for CPU:
 
 - GPU stats: one `nvidia-smi --query-gpu=... --format=csv,noheader,nounits`
   call per poll (utilization, temps, fan %, power draw/limit, graphics/SM/mem
   clocks + maxes, VRAM used/free/total, throttle reasons, P-state, driver).
 - Processes: `nvidia-smi --query-compute-apps=pid,process_name,used_memory`,
   polled on alternate ticks.
+- CPU: `cat /proc/stat`, with utilization computed from the idle-time delta
+  between consecutive polls.
 
 No privileges, no root helpers, no system changes. If `nvidia-smi` is missing
 or no NVIDIA GPU is present, the widget shows `GPU —` and the panel shows a

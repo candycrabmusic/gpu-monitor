@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "vichu.gpu-monitor",
   "name": "GPU Monitor",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "vichu",
   "license": "MIT",
   "description": "NVIDIA GPU utilization, temperature, VRAM, clocks, power and fan bar-widget with a full details panel",

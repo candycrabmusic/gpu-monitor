@@ -220,6 +220,16 @@ Panel {
               warnColor: root.warnColor
               fontFamily: root.contentFontFamily
             }
+            StatTile {
+              width: statGrid.cellWidth
+              label: "CPU"
+              value: stats.cpuUtil + " %"
+              sub: stats.cpuCores > 0 ? stats.cpuCores + (stats.cpuCores === 1 ? " thread" : " threads") : "via /proc/stat"
+              warn: stats.cpuUtil >= root.utilThreshold
+              foreground: root.contentForeground
+              warnColor: root.warnColor
+              fontFamily: root.contentFontFamily
+            }
           }
 
           // ---------- Throttling ----------
