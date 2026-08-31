@@ -20,6 +20,7 @@ QtObject {
   // ---- public read-only surface (bound by the bar label + panel) ----
   property bool available: false
   property bool firstSample: false
+  property bool cpuAvailable: false   // true once a valid /proc/stat sample lands
 
   property string gpuName: ""
   property string driver: ""
@@ -172,7 +173,7 @@ QtObject {
         cores = cores + 1
       }
     }
-    if (!agg) { root.cpuUtil = 0; return }
+    if (!agg) { root.cpuUtil = 0; root.cpuAvailable = false; return }
 
     // The aggregate `cpu` line reports the *system-wide* jiffies summed over
     // all cores, so utilization over it is already the whole-machine percent.
@@ -185,6 +186,7 @@ QtObject {
     }
 
     root.cpuCores = cores
+    root.cpuAvailable = true
 
     if (root.cpuPrev) {
       var dTotal = curTotal - root.cpuPrev.total

@@ -171,26 +171,30 @@ BarWidget {
     }
   }
 
-  // Small CPU usage bar: a thin strip under the label whose fill tracks the
-  // current CPU utilization. Hidden until the first CPU sample lands.
+  // CPU usage bar: a thin horizontal bar inside the widget, centered under the
+  // GPU text label and matching its width. Its fill tracks the current CPU
+  // utilization and flips to the bar's urgent color above the CPU threshold.
   Item {
     id: cpuBar
     anchors {
-      left: parent.left
-      right: parent.right
       bottom: parent.bottom
+      bottomMargin: 2
+      horizontalCenter: parent.horizontalCenter
     }
-    height: 2
-    visible: stats.firstSample
+    width: Math.max(24, button.labelWidth)
+    height: 3
+    visible: stats.cpuAvailable || stats.available
+    z: 5
 
     Rectangle {
       anchors.fill: parent
-      color: Qt.rgba(root.normalColor.r, root.normalColor.g, root.normalColor.b, 0.22)
       radius: height / 2
+      color: Qt.rgba(root.normalColor.r, root.normalColor.g, root.normalColor.b, 0.25)
     }
 
     Rectangle {
-      width: parent.width * (stats.cpuUtil / 100)
+      id: cpuBarFill
+      width: parent.width * (Math.max(0, Math.min(100, stats.cpuUtil)) / 100)
       height: parent.height
       radius: height / 2
       color: stats.cpuUtil >= root.utilThreshold ? root.warnColor : root.normalColor
