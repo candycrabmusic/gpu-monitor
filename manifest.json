@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "vichu.gpu-monitor",
+  "name": "GPU Monitor",
+  "version": "1.0.0",
+  "author": "vichu",
+  "license": "MIT",
+  "description": "NVIDIA GPU utilization, temperature, VRAM, clocks, power and fan bar-widget with a full details panel",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "GPU Monitor",
+    "description": "GPU temp/utilization in the bar, full stats on click",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "left",
+    "defaults": {
+      "updateInterval": 2000,
+      "tempThreshold": 80,
+      "utilThreshold": 90,
+      "memThreshold": 90,
+      "displayMode": "Both"
+    },
+    "schema": [
+      { "key": "updateInterval", "type": "number", "label": "Update interval (ms)", "defaultValue": 2000 },
+      { "key": "tempThreshold", "type": "number", "label": "Temperature warning (°C)", "defaultValue": 80 },
+      { "key": "utilThreshold", "type": "number", "label": "Utilization warning (%)", "defaultValue": 90 },
+      { "key": "memThreshold", "type": "number", "label": "VRAM warning (%)", "defaultValue": 90 },
+      { "key": "displayMode", "type": "enum", "label": "Bar label", "options": ["Both", "Temp", "Usage"], "defaultValue": "Both", "description": "Both shows 'temp° usage%', Temp shows only the temperature, Usage only the utilization. Right-click the widget to cycle." }
+    ]
+  }
+}
