@@ -220,17 +220,68 @@ Panel {
               warnColor: root.warnColor
               fontFamily: root.contentFontFamily
             }
-            StatTile {
-              width: statGrid.cellWidth
-              label: "CPU"
-              value: stats.cpuUtil + " %"
-              sub: stats.cpuCores > 0 ? stats.cpuCores + (stats.cpuCores === 1 ? " thread" : " threads") : "via /proc/stat"
-              warn: stats.cpuUtil >= root.utilThreshold
-              foreground: root.contentForeground
-              warnColor: root.warnColor
-              fontFamily: root.contentFontFamily
+          }
+
+          // ---------- CPU usage bar ----------
+          Column {
+            width: parent.width
+            spacing: Style.space(8)
+
+            Item {
+              width: parent.width
+              height: cpuHeader.implicitHeight
+
+              PanelSectionHeader {
+                id: cpuHeader
+                text: "CPU USAGE"
+                foreground: root.contentForeground
+                fontFamily: root.contentFontFamily
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+              }
+
+              Text {
+                text: stats.cpuUtil + " % · " + (stats.cpuCores > 0 ? stats.cpuCores + (stats.cpuCores === 1 ? " thread" : " threads") : "via /proc/stat")
+                color: stats.cpuUtil >= root.utilThreshold ? root.warnColor : Qt.darker(root.contentForeground, 1.4)
+                font.family: root.contentFontFamily
+                font.pixelSize: Style.font.body
+                font.bold: stats.cpuUtil >= root.utilThreshold
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+              }
+            }
+
+            // Usage bar: track + fill in panel accent, urgent color above the
+            // threshold. Animated so it does not jump between polls.
+            Rectangle {
+              width: parent.width
+              height: Style.space(6)
+              radius: height / 2
+              color: Qt.rgba(root.contentForeground.r, root.contentForeground.g, root.contentForeground.b, 0.10)
+
+              Rectangle {
+                width: parent.width * (Math.max(0, Math.min(100, stats.cpuUtil)) / 100)
+                height: parent.height
+                radius: height / 2
+                color: stats.cpuUtil >= root.utilThreshold ? root.warnColor : root.accentColor
+
+                Behavior on width {
+                  NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                }
+              }
+            }
+
+            Text {
+              text: "Whole-machine utilization from /proc/stat · updated every " + Math.round(root.setting("updateInterval", 2000) / 1000) + " s"
+              color: Qt.darker(root.contentForeground, 1.6)
+              font.family: root.contentFontFamily
+              font.pixelSize: Style.font.caption
+              wrapMode: Text.WordWrap
+              width: parent.width
             }
           }
+
+          PanelSeparator { foreground: root.contentForeground }
 
           // ---------- Throttling ----------
           Column {
